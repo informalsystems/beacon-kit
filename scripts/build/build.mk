@@ -100,6 +100,7 @@ IMAGE_NAME ?= $(TESTAPP)
 
 # Docker Paths
 DOCKERFILE = ./Dockerfile
+DOCKERFILE_E2E = ./Dockerfile.e2e
 
 build-docker: ## build a docker image containing `beacond`
 	@echo "Build a release docker image for the Cosmos SDK chain..."
@@ -118,3 +119,51 @@ push-docker-github: ## push the docker image to the ghcr registry
 	@echo "Push the release docker image to the ghcr registry..."
 	docker tag $(IMAGE_NAME):$(VERSION) ghcr.io/berachain/beacon-kit:$(VERSION)
 	docker push ghcr.io/berachain/beacon-kit:$(VERSION)
+
+build-docker-e2e: ## build a docker image containing `beacond` used in the e2e tests
+	@echo "Build an e2e docker image..."
+	docker build \
+	--build-arg IMAGE_NAME=$(IMAGE_NAME) \
+	--build-arg VERSION=$(VERSION) \
+	-f ${DOCKERFILE_E2E} \
+	-t cometbft/e2e-node:$(VERSION) \
+	./testing # work around .dockerignore restrictions in the root folder
+
+build-generator: ## build e2e generator
+	@echo "Build the e2e generator..."
+	@echo "WARNING: go.mod and go.sum will be updated. Revert the changes if you do not want the generator requirements included."
+	@go get github.com/cometbft/cometbft/test/e2e/generator
+	@go build -mod=readonly -o $(OUT_DIR)/generator github.com/cometbft/cometbft/test/e2e/generator
+
+# Hack: force the same viper version as CometBFT.
+# The berachain cometbft fork is on an incompatible viper version.
+# TODO: Update viper in the cometbft fork.
+COMETBFT_DEPENDENCY_PATH := $(shell go list -m -f '{{ .Dir }}' github.com/cometbft/cometbft)
+COMETBFT_VIPER_VERSION := "$(shell go list -m -f '{{ .Version }}' -modfile "$(COMETBFT_DEPENDENCY_PATH)/go.mod" github.com/spf13/viper)"
+BEACONKIT_VIPER_VERSION := "$(shell go list -m -f '{{ .Version }}' github.com/spf13/viper)"
+
+# Obsolete, remove!
+build-runner-comet: ## build e2e runner
+	@echo "Build the e2e runner..."
+
+# Hack: Force the same viper version.
+	@echo "CometBFT dependency path: $(COMETBFT_DEPENDENCY_PATH)"
+	@test -d "$(COMETBFT_DEPENDENCY_PATH)" || go mod download
+	@echo "Beaconkit Viper version: $(BEACONKIT_VIPER_VERSION)"
+	@echo "CometBFT Viper version: $(COMETBFT_VIPER_VERSION)"
+	@go get "github.com/spf13/viper@$(COMETBFT_VIPER_VERSION)"
+# End of hack.
+	@go build -mod=readonly -o $(OUT_DIR)/runner github.com/cometbft/cometbft/test/e2e/runner
+# Hack: restore original viper version.
+	@go get "github.com/spf13/viper@$(BEACONKIT_VIPER_VERSION)"
+# End of hack.
+
+build-runner: ## build e2e runner
+	@echo "Build the e2e runner..."
+	@go build -mod=readonly -o $(OUT_DIR)/runner ./testing/runner
+
+build-e2e:
+	@$(MAKE) build-docker VERSION=local-version \
+    		build-docker-e2e VERSION=local-version \
+    		build-generator \
+    		build-runner

@@ -407,3 +407,29 @@ test-e2e-deposits: ## run e2e tests
 
 test-e2e-deposits-no-build:
 	go test -timeout 0 -tags e2e,bls12381,test ./testing/e2e/. -v -testify.m TestDepositRobustness
+
+###############################################################################
+###                               E2E Testing                               ###
+###############################################################################
+
+test-e2e-ci: ## run e2e CI tests
+	@$(MAKE) build-e2e test-e2e-ci-no-build
+
+test-e2e-ci-no-build:
+	mkdir -p monitoring
+	testing/files/run-multiple.sh testing/networks/ci.toml
+
+test-e2e-nightly: ## run e2e nightly tests
+	@$(MAKE) build-e2e test-e2e-nightly-no-build
+	build/bin/generator -g 5 -d testing/networks/nightly -p
+
+test-e2e-nightly-no-build:
+	mkdir -p monitoring
+	testing/files/run-multiple.sh testing/networks/nightly/*-group*-*.toml
+
+test-e2e-single: ## run e2e single test
+	@$(MAKE) build-e2e test-e2e-single-no-build
+
+test-e2e-single-no-build:
+	mkdir -p monitoring
+	testing/files/run-multiple.sh testing/networks/single.toml
