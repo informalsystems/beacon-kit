@@ -418,3 +418,10 @@ test-e2e-single: ## run e2e single node test
 test-e2e-single-no-build:
 	mkdir -p monitoring
 	testing/files/run-multiple.sh testing/networks/single.toml
+
+test-cmt-e2e-build:
+	@$(MAKE) build-e2e
+
+cmt-e2e-monitoring:
+	@echo "Monitoring directory created. You can view the logs in the monitoring directory."
+	cp -r testing/runner/monitoring/* monitoring/
