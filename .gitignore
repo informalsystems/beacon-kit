@@ -240,5 +240,4 @@ temp-test-unit-cover.txt
 .air.toml
 
 # e2e framework
-monitoring/
 testing/networks/single/
