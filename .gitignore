@@ -240,9 +240,7 @@ temp-test-unit-cover.txt
 .air.toml
 
 # e2e framework
-testing/monitoring/data-grafana/
-testing/monitoring/data-prometheus/
-testing/monitoring/prometheus.yml
+monitoring/
 testing/networks/single/
 testing/networks/simple/
 testing/networks/ci/
