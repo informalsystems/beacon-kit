@@ -39,7 +39,10 @@ RUN chmod +x /usr/bin/entrypoint-builtin
 
 # Configure entrypoint_cmt_e2e.sh
 ENV RPC_PREFIX="http://"
-ENV RPC_DIAL_URL="host.docker.internal:8551"
+ENV RPC_DIAL_URL="172.17.0.1:8551" 
+#"host.docker.internal:8551"
+#"172.17.0.1:8551" 
+
 ENV NON_INTERACTIVE=1
 ENV JWT_SECRET_PATH="/testing/files/jwt.hex"
 
@@ -57,7 +60,7 @@ ENV CMTHOME=/cometbft
 ENV HOMEDIR=/cometbft
 ENV GORACE="halt_on_error=1"
 
-EXPOSE 26656 26657 26660 6060
+EXPOSE 26656 26657 26660 6060 3500
 ENTRYPOINT ["/testing/files/entrypoint_cmt_e2e.sh"]
 CMD ["devnet"]
 STOPSIGNAL SIGTERM
