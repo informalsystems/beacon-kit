@@ -318,3 +318,37 @@ test-e2e-deposits: ## run e2e tests
 
 test-e2e-deposits-no-build:
 	go test -timeout 0 -tags e2e,bls12381,test ./testing/e2e/. -v -testify.m TestDepositRobustness
+
+###############################################################################
+###                       CometBFT  E2E Framework Testing                          ###
+###############################################################################
+
+test-cmt-e2e-single-run: ## run e2e single node test
+	@$(MAKE) build-cmt-e2e test-cmt-e2e-single-no-build
+
+test-cmt-e2e-single-no-build:
+	testing/files/run-multiple.sh testing/networks/single.toml
+
+test-e2e-simple: ## run e2e single node test
+	@$(MAKE) build-cmt-e2e test-e2e-simple-no-build
+
+test-e2e-simple-no-build:
+	testing/files/run-multiple.sh testing/networks/simple.toml
+
+test-e2e-ci: ## run e2e single node test
+	@$(MAKE) build-cmt-e2e test-e2e-ci-no-build
+
+test-e2e-ci-no-build:
+	testing/files/run-multiple.sh testing/networks/ci.toml
+
+start-monitoring:
+	@echo "Starting local prometheus and grafana..."
+	@if [ ! -f testing/monitoring/prometheus.yml ]; then \
+	  echo "Prometheus configuration file not found. Please create one using `build/bin/cmt_e2e/runner -f testing/networks/<youtest>.toml setup`."; \
+	  exit 1; \
+	fi
+	@cd testing/monitoring && docker compose up -d
+
+stop-monitoring:
+	@echo "Stopping local prometheus and grafana..."
+	cd testing/monitoring && docker compose down

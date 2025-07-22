@@ -100,6 +100,8 @@ IMAGE_NAME ?= $(TESTAPP)
 
 # Docker Paths
 DOCKERFILE = ./Dockerfile
+DOCKERFILE_E2E = ./Dockerfile.e2e
+DOCKERFILE_POLYCLI = ./Dockerfile.polycli
 
 build-docker: ## build a docker image containing `beacond`
 	@echo "Build a release docker image for the Cosmos SDK chain..."
@@ -118,3 +120,27 @@ push-docker-github: ## push the docker image to the ghcr registry
 	@echo "Push the release docker image to the ghcr registry..."
 	docker tag $(IMAGE_NAME):$(VERSION) ghcr.io/berachain/beacon-kit:$(VERSION)
 	docker push ghcr.io/berachain/beacon-kit:$(VERSION)
+
+build-docker-cmt-e2e: ## build a docker image containing `beacond` used in the e2e tests
+	@echo "Build an e2e docker image..."
+	docker build \
+	-f ${DOCKERFILE_E2E} \
+	-t cometbft/e2e-node:local-version \
+	./testing # work around .dockerignore restrictions in the root folder
+
+build-cmt-e2e-runner: ## build e2e runner
+		@echo "Build the e2e runner..."
+		@go build -mod=readonly -o $(OUT_DIR)/cmt_e2e/runner ./testing/cmt_e2e/runner
+
+build-polycli:
+	@echo "Build e2e polycli docker image..."
+	docker build \
+	-f ${DOCKERFILE_POLYCLI} \
+	-t polycli \
+	.
+
+build-cmt-e2e:
+	@$(MAKE) build-docker VERSION=local-version \
+		build-docker-cmt-e2e \
+		build-cmt-e2e-runner \
+		build-polycli
